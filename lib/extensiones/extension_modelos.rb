@@ -1,4 +1,5 @@
 # encoding: utf-8
+# TODO Separar por funcion en diferentes módulos e incluirlos en los modelos explícitamente
 module ExtensionModelos
   extend ActiveSupport::Concern
 
@@ -19,7 +20,7 @@ module ExtensionModelos
       atributos = self.attribute_names.map {|s| s.to_sym}.reject {|n| n =~ /_id$/ or excepto.include? n }
 
       # Rechazo las asociaciones de tipo +:through+
-      atributos << self.reflections.reject do |k,v|
+      atributos << self.reflections.reject do |k, v|
         not v.instance_of?(ActiveRecord::Reflection::AssociationReflection)
       end.keys.reject {|n| excepto.include? n}
       atributos.flatten.sort
@@ -32,8 +33,8 @@ module ExtensionModelos
       # Defino el método asociacion_ids= que sincroniza la serialización con la
       # variable de instancia @asociaciones
       define_method "#{asociacion}_ids=" do |ids|
-        super Array.wrap(ids)
-        cargar_ids_para :subclase, SubclaseDeCapacidad
+        super Array.wrap(ids.reject(&:blank?).map(&:to_i).reject { |id| id > clase.count })
+        cargar_ids_para asociacion, clase
       end
 
       # Después de inicializar carga la variable de instancia con las instancias
@@ -55,31 +56,6 @@ module ExtensionModelos
 # Métodos de instancia
 
   included do
-
-    def como_arreglo(filtro = nil)
-      filtro ||= attributes.keys.flatten
-      filtro.inject([]) do |arreglo, atributo|
-        arreglo << self.send(atributo)
-      end
-    end
-
-    # Busca las asociaciones indicadas por si ya existen, para no duplicar.
-    # Opcionalmente las crea.
-    def buscar_asociaciones(asociaciones = {}, crear = false)
-      asociaciones.each_pair do |modelo,metodo|
-        if self.send(modelo).try(metodo).blank?
-          self.send("#{modelo}=", nil)
-        else
-          clase = self.association(modelo).reflection.klass
-
-          # asociacion = Asociacion.find_by_metodo(self.asociacion.metodo)
-          # asociacion = Asociacion.find_or_create_by_metodo(self.asociacion.metodo)
-          self.send(  "#{modelo}=", #
-                      clase.send("find#{crear ? '_or_create' : nil}_by_#{metodo}",
-                          self.send(modelo).try(metodo) ) )
-        end
-      end
-    end
 
     # asociacion_ids = @asociaciones.collect(&:id).uniq.sort
     def guardar_ids_para(asociacion)

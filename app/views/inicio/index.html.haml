@@ -1,40 +1,26 @@
-#arbol_de_contenidos.barra
-  %ul.menu
-    %li
-      .plegable Perfiles
-      %ul.submenu
-        %li= link_to 'Ver (todos)', calicatas_path
-        %li= link_to 'Ver (modales)', series_path
-        %li
-          Exportar
-          %ul.submenu
-            %li= link_to 'a CSV (todos)', preparar_csv_calicatas_path
-            %li= link_to 'a CSV (modales)', series_preparar_csv_path
-            %li= link_to 'a GeoJSON (todos)', geo_calicatas_path(format: :json)
-            %li= link_to 'a GeoJSON (modales)', series_geo_path(format: :json)
-    %li
-      .plegable Horizontes
-      %ul.submenu
-        %li
-          Exportar
-          %ul.submenu
-            %li= link_to 'a CSV', preparar_csv_horizontes_path
-    %li
-      .plegable Grupos
-      %ul.submenu
-        %li= link_to 'Ver', grupos_path
-    %li
-      .plegable Fases
-      %ul.submenu
-        %li= link_to 'Ver', fases_path
+#bienvenida
+  .span-10
+    %h2 Bienvenido a SiSINTA
 
-  - if current_usuario.try(:admin?)
-    %ul#administracion.menu
-      %li
-        .plegable Usuarios
-        %ul.submenu
-          %li
-            = link_to 'Ver', usuarios_path
+    %h3 Búsqueda de perfiles
 
-#bienvenida.cuerpo
-  %h2 Bienvenido a SiSINTA
+    %p
+      Actualmente hay #{Perfil.count} perfiles (#{Perfil.publicos.count}
+      públicos) cargados en #{Serie.count} series.
+
+    %p
+      Para seleccionar perfiles
+      = link_to 'a exportar', exportar_perfiles_path
+      desde el mapa, mantener apretado shift y marcar un rectángulo.
+
+    = search_form_for @busqueda do |b|
+      .span-4=  b.label :serie_nombre_or_numero_cont, 'Por nombre o número'
+      .span-6.last= b.text_field :serie_nombre_or_numero_cont
+
+      .span-2= b.submit 'Buscar'
+
+  .span-14.last
+    #mapa{ data: { geojson: perfiles_path(publicos: true, format: :geojson), seleccion_url: seleccion_path } }
+
+-# TODO Cargar dinámicamente desde un js
+= javascript_include_tag 'http://maps.google.com/maps/api/js?v=3.13&sensor=false&libraries=geometry'

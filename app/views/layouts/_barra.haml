@@ -1,0 +1,49 @@
+%ul.menu
+  %li
+    .plegable Series
+    %ul.submenu
+      %li= link_to 'Ver', series_path
+  %li
+    .plegable Perfiles
+    %ul.submenu
+      - if can? :create, Perfil
+        %li= link_to 'Cargar', new_perfil_path
+      %li= link_to 'Ver', perfiles_path
+      %li= link_to 'Exportar', exportar_perfiles_path
+      %li
+        Búsquedas
+        %ul.submenu
+          %li= link_to 'Nueva', new_busqueda_path
+          %li= link_to 'Guardadas', busquedas_path
+      %li
+        Subgrupos
+        %ul.submenu
+          %li= link_to 'Ver', grupos_path
+      %li
+        Fases
+        %ul.submenu
+          %li= link_to 'Ver', fases_path
+
+  %li
+    .plegable Proyectos
+    %ul.submenu
+      %li= link_to 'Ver', proyectos_path
+
+%ul#administracion.menu
+  - if current_usuario.try(:admin?)
+    %li
+      .plegable Usuarios
+      %ul.submenu
+        %li
+          = link_to 'Ver', usuarios_path
+  %li
+    .plegable Equipos
+    %ul.submenu
+      %li
+        = link_to 'Ver', equipos_path
+
+%ul#otros.menu
+  %li
+    .plegable Contacto
+    %ul.submenu
+      %li= link_to 'Mail', 'mailto:sisinta@inta.gob.ar'

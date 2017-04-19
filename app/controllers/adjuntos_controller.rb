@@ -1,85 +1,61 @@
 # encoding: utf-8
 class AdjuntosController < AutorizadoController
+  responders :collection
 
-  before_filter :cargar_calicata
+  # Carga los adjuntos a través del perfil
+  load_and_authorize_resource :perfil
+  load_and_authorize_resource through: :perfil
 
-  def show
-    @adjunto = Adjunto.find(params[:id])
-
-    respond_to do |format|
-      format.html # show.html.erb
-      format.json { render json: @adjunto }
-    end
-  end
+  before_filter :decorar, only: [:index, :show, :edit, :new]
 
   def index
-    @adjuntos = @calicata.adjuntos
+    respond_with @perfil, @adjuntos
+  end
 
-    respond_to do |format|
-      format.html # index.html.erb
-      format.json { render json: @adjuntos }
-    end
+  def show
+    respond_with @perfil, @adjunto
   end
 
   def update
-    @adjunto = Adjunto.find(params[:id])
-
-    respond_to do |format|
-      if @adjunto.update_attributes(params[:adjunto])
-        format.html { redirect_to calicata_adjuntos_path(@calicata),
-                      notice: I18n.t('messages.updated', model: 'Adjunto') }
-        format.json { head :ok }
-      else
-        format.html { render action: "edit" }
-        format.json { render json: @calicata.errors, status: :unprocessable_entity }
-      end
-    end
+    @adjunto.update_attributes(adjunto_params)
+    respond_with @perfil, @adjunto
   end
 
   def destroy
-    @adjunto = Adjunto.find(params[:id])
     @adjunto.destroy
-
-    respond_to do |format|
-      format.html { redirect_to calicata_adjuntos_path(@calicata) }
-      format.json { head :ok }
-    end
+    respond_with @perfil, @adjunto
   end
 
   def new
-    @adjunto = Adjunto.new
-    @titulo = 'Subir adjunto'
-
-    respond_to do |format|
-      format.html # new.html.erb
-      format.json { render json: [@calicata, @adjunto] }
-    end
+    respond_with @perfil, @adjunto
   end
 
   def create
-    @adjunto = Adjunto.new(params[:adjunto])
+    @adjunto.usuario = current_usuario
 
-    respond_to do |format|
-      if @calicata.adjuntos << @adjunto
-        format.html { redirect_to calicata_adjuntos_path(@calicata),
-                      notice: I18n.t('messages.created', model: 'Adjunto') }
-        format.json { render json: @adjunto, status: :created,
-                      location: calicata_adjuntos_path(@calicata) }
-      else
-        format.html { render action: "new" }
-        format.json { render json: @adjunto.errors, status: :unprocessable_entity }
-      end
-    end
+    @perfil.adjuntos << @adjunto
+    respond_with @perfil, @adjunto
   end
 
   def edit
-    @adjunto = Adjunto.find(params[:id])
-    @titulo = "Editando adjunto de calicata #{@calicata.numero}"
+    respond_with @perfil, @adjunto
   end
 
   def descargar
-    @adjunto = Adjunto.find(params[:id])
-
     send_file @adjunto.archivo.path, type: @adjunto.archivo_content_type, disposition: 'inline'
   end
+
+  private
+
+    def adjunto_params
+      params.require(:adjunto).permit(
+        :notas, :archivo
+      )
+    end
+
+    def decorar
+      @perfil = @perfil.decorate
+      @adjunto = @adjunto.decorate unless @adjunto.nil?
+      @adjuntos = PaginadorDecorator.decorate(@adjuntos) unless @adjuntos.nil?
+    end
 end

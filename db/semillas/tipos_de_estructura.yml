@@ -1,4 +1,4 @@
-# Los valores posibles para los Tipos de Estructura en la ficha de calicatas.
+# Los valores posibles para los Tipos de Estructura en la ficha de perfiles.
 # El id es de uso interno, y si se lo cambia se corre el riesgo de perder
 # asociaciones previas.
 #
@@ -19,14 +19,22 @@
 - id:     8
   valor:  prismas simples irregulares
 - id:     9
-  valor:  prismas simples regulares
+  valor:  prismas
 - id:     10
-  valor:  prismas compuestos irregulares
+  valor:  prismas simples regulares
 - id:     11
-  valor:  prismas compuestos regulares
+  valor:  prismas compuestos irregulares
 - id:     12
-  valor:  semicolumnar
+  valor:  prismas compuestos regulares
 - id:     13
-  valor:  columnar
+  valor:  semicolumnar
 - id:     14
+  valor:  columnar
+- id:     15
+  valor:  laminar
+- id:     16
   valor:  agregados laminares o platiformes
+- id:     17
+  valor:  masiva
+- id:     18
+  valor:  grano suelto

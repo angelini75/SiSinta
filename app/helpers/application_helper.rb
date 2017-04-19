@@ -14,19 +14,17 @@ module ApplicationHelper
   # descripción del campo.
   #
   # * *Args*    :
-  #   - +campo+ -> El campo del que devolver la descripción.
+  #   - +texto+ -> El texto que poner en la ayuda.
   #   - +html+ -> Hash de opciones para el div. Se usa +clases+ para determinar
   #   la/las clase/s del +div+, que por default es +ayuda+, e +id+ para
-  #   determinar el id, que por default es +ayuda_modelo_campo+
+  #   determinar el id, que por default es nil.
   # * *Returns* :
   #   - Un +div+ preparado con la clase 'ayuda'
-  #
-  def ayuda_para(campo, html = {})
-    texto = Ayuda.find_by_campo(campo).try(:ayuda)
-    id = html[:id] || "ayuda_#{campo.gsub('.', '_')}"
+  def ayuda_para(texto, html = {})
+    id = "id='#{html[:id]}'" if html[:id].present?
     clases = html[:clases] || 'ayuda'
 
-    "<div id='#{id}' class='#{clases}'>#{texto}</div>".html_safe if texto
+    "<div #{id} class='#{clases}'>#{texto}</div>".html_safe if texto
   end
 
   # Tomo prestado de http://asciicasts.com/episodes/228-sortable-table-columns
@@ -34,15 +32,16 @@ module ApplicationHelper
     columna = columna.to_s  # para permitir símbolos
     titulo ||= columna.titleize
     direccion = (columna == metodo_de_ordenamiento && direccion_de_ordenamiento == "asc") ? "desc" : "asc"
+    # TODO ver cómo agregar los `request.query_parameters` actuales sin perder el join
     link_to titulo, por: columna, direccion: direccion
   end
 
   # Variables para acceder desde la vista y armar las tablas de lookup
-  def subclases
+  def subclases_de_capacidad
     @subclases ||= SubclaseDeCapacidad.all
   end
 
-  def clases
+  def clases_de_capacidad
     @clases ||= ClaseDeCapacidad.all
   end
 
@@ -154,4 +153,86 @@ module ApplicationHelper
     @subclases_de_erosion ||= SubclaseDeErosion.all
   end
 
+  # Título de la página para el +<head>+ por defecto, extra se determina en el
+  # helper de cada controlador, dependiendo de la acción
+  def titulo_de_la_aplicacion(extra = nil)
+    extra ||= titulo_de_la_accion
+    "#{extra.nil? ? nil : "#{extra} | "}SiSINTA"
+  end
+
+  # Por defecto, no se usa nada. Esto va en la cabecera.
+  def titulo_de_la_accion
+    case params[:controller]
+    when 'devise/registrations'
+
+      case params[:action]
+      when 'edit'
+        'Detalles de la cuenta'
+      when 'new'
+        'Creación de la cuenta'
+      else
+        nil
+      end
+
+    when 'devise/sessions'
+
+      case params[:action]
+      when 'new'
+        'Ingresar al sistema'
+      else
+        nil
+      end
+
+    when 'devise/passwords'
+
+      case params[:action]
+      when 'edit'
+        'Cambiar el password'
+      when 'new'
+        'Generar un nuevo password'
+      else
+        nil
+      end
+
+    else
+      nil
+    end
+  end
+
+  # Por defecto, no se usa nada. Esto va en la cabecera, debajo de +titulo+
+  def subtitulo
+    nil
+  end
+
+  # Un simple link para volver al tope de la página
+  def volver_arriba(id = nil)
+    link_to 'Volver arriba', id || '#', class: 'volver-arriba'
+  end
+
+  # Genera un checkbox construido para modificar la asociación anidada,
+  # determinando si hay que anularla o destruirla
+  def destruir_o_anular(recursos, asociacion, id, opciones = {})
+    opciones.reverse_merge!({
+      alias_de_la_asociacion: nil,
+      metodo: '_destroy'
+    })
+
+    hash = "#{asociacion}[#{recursos}_attributes]"
+    hash << "[#{id}][#{opciones[:metodo]}]"
+
+    valor = case opciones[:metodo]
+    when '_destroy'
+      true
+    when 'anular'
+      opciones[:alias_de_la_asociacion] || asociacion
+    else
+      false
+    end
+
+    check_box_tag hash, valor, false, class: 'destroy'
+  end
+
+  def notificacion(tipo, mensaje)
+    content_tag :div, mensaje, class: 'mensaje', id: "flash_#{tipo}" if mensaje.is_a?(String)
+  end
 end

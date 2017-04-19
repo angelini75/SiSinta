@@ -1,0 +1,34 @@
+.botonera
+  - if can?(:update, @serie.object) || can?(:modificar, @serie.object)
+    = link_to 'Editar', edit_serie_path(@serie)
+    = '|'
+    = link_to 'Permisos', permisos_path(modelo: 'serie', id: @serie)
+    = '|'
+  - if can?(:delete, @serie.object)
+    = link_to 'Eliminar', @serie, data: { confirm: t(:confirmar) }, method: :delete
+    = '|'
+  = link_to 'Volver', series_path
+
+#serie.span-24.show
+  = fields_for @serie do |f|
+
+    = field_set_tag 'Datos de la serie', class: 'celeste_oscuro span-23 last' do
+
+      .span-22.last
+        .span-2= f.label 'Nombre'
+        .span-8= @serie.nombre
+        .span-2= f.label 'Provincia'
+        .span-6= @serie.provincia.try(:nombre)
+        .span-2= f.label 'Símbolo'
+        .span-2.last= @serie.simbolo
+
+      .span-22.last
+        .span-2= f.label 'Descripción'
+        .span-20.last!= @serie.descripcion
+
+      = field_set_tag 'Perfiles asociados', class: 'celeste plegable span-22 last' do
+
+        .span-21.campo= render partial: 'comunes/perfiles_asociados',
+          locals: { perfiles: @serie.perfiles, param: 'serie', bloqueado: true }
+
+= volver_arriba

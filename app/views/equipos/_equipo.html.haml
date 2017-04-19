@@ -1,0 +1,13 @@
+%tr
+  %td.serie=      equipo.nombre
+  %td.miembros=   equipo.miembros.count
+  %td.acciones
+    - if can? :read, equipo.object
+      = link_to 'Mostrar', equipo
+    - if can? :update, equipo.object
+      = '|'
+      = link_to 'Editar', edit_equipo_path(equipo)
+    - if can? :delete, equipo.object
+      = '|'
+      = link_to 'Eliminar', equipo,
+          data: { confirm: t(:confirmar) }, method: :delete

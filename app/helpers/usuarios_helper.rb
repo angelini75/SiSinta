@@ -1,18 +1,18 @@
 # encoding: utf-8
 module UsuariosHelper
-  def link_to_eliminar(usuario)
-    admins = Usuario.admins.all
-    if(admins.include?(usuario) and admins.size == 1)
-      link_to('Eliminar', nil, { class: 'eliminar_admin' } )
+  include PaginacionHelper
+
+  def titulo_de_la_accion
+    case params[:action]
+    when 'index'
+      "Administración de usuarios y grupos"
     else
-      link_to('Eliminar', usuario, data: {confirm: '¿Estás seguro?'}, method: :delete)
+      nil
     end
   end
 
-  def lista_de_fichas
-    [
-      ['Formulario clásico de Etchevere', 'completa']
-    ]
+  def roles_globales(seleccionado)
+    options_for_select [  ['Administrador', 'Administrador' ],
+                          ['Autorizado',    'Autorizado'    ] ], seleccionado
   end
-
 end

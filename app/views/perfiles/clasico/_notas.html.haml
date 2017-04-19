@@ -1,0 +1,26 @@
+= field_set_tag 'Notas', class: 'celeste plegable span-22 last' do
+  .span-21.last.campo
+    .span-2= f.label :observaciones
+    .span-19.last= f.text_area :observaciones, disabled: bloqueado
+  .span-21.last.campo
+    .span-2= f.label :etiquetas
+    .span-19.last= f.autocomplete_field :etiqueta_list,
+      autocompletar_etiquetas_perfiles_path, data: { delimiter: ', ' },
+      disabled: bloqueado
+    = ayuda_para t('ayuda.perfil.etiquetas')
+  .span-21.last.campo
+    .span-2= f.label :reconocedores
+    .span-19.last= f.autocomplete_field :reconocedor_list,
+      autocompletar_reconocedores_perfiles_path, data: { delimiter: ', ' },
+      disabled: bloqueado
+    = ayuda_para t('ayuda.perfil.reconocedores')
+  - if f.object.usuario.present?
+    .span-21.last.campo
+      .span-2= f.label :usuario, 'Cargado por'
+      .span-19.last= f.text_field :usuario, disabled: true
+      = ayuda_para t('ayuda.perfil.usuario')
+  .span-21.last.campo
+    .span-2= f.label :publico
+    .span-19.last= f.check_box :publico,
+      disabled: bloqueado
+    = ayuda_para t('ayuda.perfil.publico')

@@ -1,18 +1,22 @@
 #lista
-  .botonera= render 'botonera_indice'
+  .botonera
+    #paginacion
+      = paginate @usuarios
+      = elegir_filas 'usuarios'
 
+  = form_tag update_varios_usuarios_path, method: :put do
 
-  = form_tag usuarios_path, method: :put do |f|
+    %table#usuarios
+      %thead
+        %tr
+          %th.nombre  Usuario
+          %th.email   Email
+          %th.rol     Rol
+          %th.acciones
 
-    %table#roles.centrado
-      %tr
-        %th{colspan: 2} Usuario
-        %th{colspan: 2} Email
-        - @roles.each do |rol|
-          %th= rol.nombre.titleize
-        %th
-      = render @usuarios
+      %tbody
+        = render @usuarios
 
-    = submit_tag 'Asignar roles'
+    .span-4= submit_tag 'Actualizar'
 
-  .botonera= render 'botonera_indice'
+  = volver_arriba

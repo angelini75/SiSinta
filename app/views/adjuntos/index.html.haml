@@ -1,16 +1,26 @@
-.botonera= render 'botonera_indice'
+#lista.span-24
+  .botonera
+    - if can? :read, @perfil.object
+      = link_to 'Mostrar perfil', @perfil
+      = '|'
+    - if can? :read, @perfil.analiticos.object
+      = link_to 'Mostrar analíticos', perfil_analiticos_path(@perfil)
+      = '|'
+    - if can?(:create, Adjunto) && can?(:update, @perfil.object)
+      = link_to 'Adjuntar archivo', new_perfil_adjunto_path(@perfil)
+      = '|'
+    = link_to 'Volver', perfiles_path
 
-.span-24
-  %table#adjuntos.centrado.span-23.last
-    %tr
-      %th Archivo
-      %th Tipo
-      %th Tamaño
-      %th Notas
-      %th
-      %th
-      %th
+  %table#adjuntos.centrado.span-24.last
+    %thead
+      %tr
+        %th Archivo
+        %th Tipo
+        %th Tamaño
+        %th Notas
+        %th.acciones
 
-    = render @adjuntos
+    %tbody
+      = render @adjuntos
 
-.botonera= render 'botonera_indice'
+  = volver_arriba

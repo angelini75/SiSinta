@@ -1,0 +1,35 @@
+#lista
+  .botonera
+    - if can? :create, Serie
+      = link_to 'Nueva serie', new_serie_path
+
+    #paginacion
+      = paginate @series
+      = elegir_filas 'series'
+
+  %table#series
+    %thead
+      %tr
+        %th= link_para_ordenar        :provincia_id,          'Provincia'
+        %th= link_para_ordenar        :nombre,                'Nombre'
+        %th= link_para_ordenar        :simbolo,               'Símbolo'
+        %th.numero= link_para_ordenar :cantidad_de_perfiles,  'Perfiles'
+        %th.acciones
+
+    %tbody
+      - @series.each do |serie|
+        %tr
+          %td= serie.provincia.try(:nombre)
+          %td= serie.nombre
+          %td= serie.simbolo
+          %td.numero= serie.perfiles.size
+          %td.acciones
+            = link_to 'Mostrar', serie
+            = '|'
+            = link_to 'Editar', edit_serie_path(serie)
+            = '|'
+            = link_to 'Permisos', permisos_path(modelo: 'serie', id: serie)
+            = '|'
+            = link_to 'Eliminar', serie, data: { confirm: t(:confirmar) }, method: :delete
+
+  = volver_arriba

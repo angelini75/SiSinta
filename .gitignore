@@ -3,14 +3,12 @@ db/*.sqlite3
 log/*.log
 tmp/
 .sass-cache/
-.*swp
-TODO
+.*sw[po]
+TODO*
 
 # Archivos que se generan en el deploy
 public/estaticos
+.capistrano
 
-# Archivos a configurar en cada deploy
-config/database.yml
-config/environments/production.rb
-config/initializers/devise.rb
-config/initializers/secret_token.rb
+# Backup de los datos
+db/datos

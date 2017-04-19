@@ -1,22 +1,29 @@
 # encoding: utf-8
-require 'test_helper'
+require './test/test_helper'
 
-class UbicacionDecoratorTest < ActionController::TestCase
+describe UbicacionDecorator do
+  let(:lugar) { build_stubbed :ubicacion, x: '-35.0', y: '-35.0' }
+  let(:usuario) { build_stubbed :usuario, config: { srid: 22195 } }
+  let(:lugar_decorado) { UbicacionDecorator.decorate lugar, context: { usuario: usuario } }
 
-  def setup
-    @juan = Usuario.find_by_nombre('Administrador')
-    @juan.srid = 22195
-    ApplicationController.new.set_current_view_context
-    sign_in @juan
+  it 'devuelve coordenadas por default si no hay usuario logueado' do
+    # 'Stub' de método inexistente (singleton method)
+    # Necesario porque el decorador busca en current_usuario si no hay contexto
+    def helpers.current_usuario
+      nil
+    end
+
+    UbicacionDecorator.decorate(lugar).srid.must_equal 4326
   end
 
-  test "debería devolver las coordenadas proyectadas según las preferencias" do
-    @lugar = Ubicacion.create(srid: 4326, x: '-35.0', y: '-35.0')
-    assert_equal @juan, UbicacionDecorator.decorate(@lugar).srid
-
-    proyeccion = Ubicacion.transformar(@lugar.srid, @juan.srid, @lugar.x, @lugar.y)
-    assert_equal proyeccion.x, UbicacionDecorator.decorate(@lugar).x, "x no coincide con la preferencia"
-    assert_equal proyeccion.y, UbicacionDecorator.decorate(@lugar).y, "y no coincide con la preferencia"
+  it 'devuelve las coordenadas proyectadas según las preferencias' do
+    lugar_decorado.srid.must_equal usuario.srid
   end
 
+  it 'proyecta x e y de acuerdo al srid preferido' do
+    proyeccion = Ubicacion.transformar(lugar.srid, usuario.srid, lugar.x, lugar.y)
+
+    lugar_decorado.x.must_equal Ubicacion.redondear(proyeccion.x)
+    lugar_decorado.y.must_equal Ubicacion.redondear(proyeccion.y)
+  end
 end

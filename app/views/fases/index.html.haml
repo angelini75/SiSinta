@@ -1,12 +1,20 @@
-.botonera= render 'botonera_indice'
+#lista
+  .botonera
+    - if can? :create, Fase
+      = link_to "Nueva fase", new_fase_path
 
-%table#fases.centrado
-  %tr
-    %th{colspan: 4} Nombre
-    %th Código
-    %th
-    %th
-    %th
-  = render @fases
+    #paginacion
+      = paginate @fases
+      = elegir_filas 'fases'
 
-.botonera= render 'botonera_indice'
+  %table#fases.centrado
+    %thead
+      %tr
+        %th{colspan: 4} Nombre
+        %th Código
+        %th.acciones
+
+    %tbody
+      = render @fases
+
+  = volver_arriba

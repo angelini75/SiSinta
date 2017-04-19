@@ -1,0 +1,95 @@
+jQuery ->
+  if $('#mapa').length
+    # Define el path de los assets para las imágenes de los íconos. Las
+    # imágenes del control de capas ya están contempladas en el css
+    digested_icon = L.icon({
+      iconUrl: "<%= asset_path 'marker-icon.png' %>"
+      iconRetinaUrl: "<%= asset_path 'marker-icon-2x.png' %>"
+      shadowUrl: "<%= asset_path 'marker-shadow.png' %>"
+    })
+
+    # Genera el markup para cada punto del geoJson
+    preparar_punto = (punto, capa) ->
+      serie = if punto.properties.serie
+        "<a target='_blank' title='Serie' href='#{punto.properties.serie.url}'>#{
+          punto.properties.serie.nombre || 'Serie'}</a> - "
+      else
+        ''
+
+      capa.bindPopup(
+        serie + "<a target='_blank' title='Perfil' href='#{punto.properties.url}'>#{
+          punto.properties.numero || 'Perfil'}</a>"
+      )
+
+    # Devuelve un marker con el ícono customizado para el punto que pasamos
+    marker_con_icono = (punto, latlng) ->
+      return L.marker(latlng, { icon: digested_icon })
+
+    # Por default mostramos Argentina entera
+    zoom = $('#mapa').data('zoom') || 4
+    centro = $('#mapa').data('centro') || [-40, -65]
+
+    mapa = L.map('mapa').setView(centro, zoom)
+
+    osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18
+      attribution: '&copy; <a href="http://openstreetmap.org/copyright">OpenStreetMap</a> contributors (' +
+        '<a href="http://opendatacommons.org/licenses/odbl/">ODbL</a>)'
+    })
+    g_hibrido = new L.Google('HYBRID')
+    g_terreno = new L.Google('TERRAIN')
+
+    # Capa inicial
+    mapa.addLayer(g_hibrido)
+
+    # Control para cambiar de capas
+    mapa.addControl(new L.Control.Layers({
+      'OpenStreetMap': osm
+      'Google': g_hibrido
+      'Google Terrain': g_terreno
+    }, {}))
+
+    # Al seleccionar un rectángulo con shift + click, enviamos las coordenadas
+    # del rectángulo para seleccionar todos los perfiles internos
+    mapa.on 'boxzoomend', (e) ->
+      # TODO Revisar si _metodo son APIs internas
+      caja = e.boxZoomBounds
+
+      seleccion = new L.Rectangle(caja, {
+        color: 'red'
+        weight: 3
+        opacity: 0.5
+        smoothFactor: 1
+        className: 'mapa_seleccion'
+      })
+
+      # Dibuja la selección actual
+      $('.mapa_seleccion').remove()
+      seleccion.addTo(mapa)
+
+      coordenadas =
+        noreste:
+          latitud: caja._northEast.lat
+          longitud: caja._northEast.lng
+        sudoeste:
+          latitud: caja._southWest.lat
+          longitud: caja._southWest.lng
+
+      # Envia bounds al server y procesar la respuesta
+      $.post $(this._container).data('seleccion-url'), coordenadas, (res) ->
+        $('#avisos').html $('<div />', { id: "flash_#{res.tipo}", text: res.mensaje })
+
+    # Pide y agrega los puntos
+    $.getJSON $('#mapa').data('geojson'), (data) ->
+      puntos = new L.MarkerClusterGroup()
+      puntos.addLayer(
+        # Agrega una capa de geoJson
+        L.geoJson(data, {
+          onEachFeature: preparar_punto
+          pointToLayer: marker_con_icono
+        })
+      ).addTo(mapa)
+
+      # Encuadra todos los puntos en el mapa a menos que definamos un centro
+      unless $('#mapa').data('centro')
+        mapa.fitBounds puntos.getBounds()

@@ -1,19 +1,15 @@
-# -*- encoding : utf-8 -*-
+# encoding: utf-8
 require File.expand_path('../boot', __FILE__)
 
 require 'rails/all'
 
 # PostGIS adapter includes a special railtie that provides support for PostGIS databases
-# in ActiveRecord’s rake tasks. This railtie is required in order to run, e.g., rake test. To
-# install this railtie, you should add this line to your config/application.rb:
-require 'active_record/connection_adapters/postgis_adapter/railtie'
+# in ActiveRecord’s rake tasks. This railtie is required in order to run, e.g., rake test
+require 'active_record/connection_adapters/postgis/railtie'
 
-if defined?(Bundler)
-  # If you precompile assets before deploying to production, use this line
-  Bundler.require *Rails.groups(:assets => %w(development test))
-  # If you want your assets lazily compiled in production, use this line
-  # Bundler.require(:default, :assets, Rails.env)
-end
+# Require the gems listed in Gemfile, including any gems
+# you've limited to :test, :development, or :production.
+Bundler.require(*Rails.groups)
 
 module SiSINTA
   class Application < Rails::Application
@@ -22,17 +18,16 @@ module SiSINTA
     # -- all .rb files in that directory are automatically loaded.
 
     # Custom directories with classes and modules you want to be autoloadable.
-    config.autoload_paths += %W(#{config.root}/lib/extensiones/)
+    config.autoload_paths += ["#{config.root}/lib/extensiones/",
+                              "#{config.root}/lib/helpers/" ]
 
-    # Only load the plugins named here, in the order given (default is alphabetical).
-    # :all can be used as a placeholder for all plugins not explicitly named.
-    # config.plugins = [ :exception_notification, :ssl_requirement, :all ]
+    config.action_controller.include_all_helpers = false
 
-    # Activate observers that should always be running.
-    # config.active_record.observers = :cacher, :garbage_collector, :forum_observer
+    # Do not suppress errors in `after_rollback`/`after_commit` callbacks.
+    config.active_record.raise_in_transactional_callbacks = true
 
     # Set Time.zone default to the specified zone and make Active Record auto-convert to this zone.
-    # Run "rake -D time" for a list of tasks for finding time zone names. Default is UTC.
+    # Run 'rake -D time' for a list of tasks for finding time zone names. Default is UTC.
     # config.time_zone = 'Central Time (US & Canada)'
 
     # The default locale is :en and all translations from config/locales/*.rb,yml are auto loaded.
@@ -40,18 +35,21 @@ module SiSINTA
     config.i18n.default_locale = :es
 
     # Configure the default encoding used in templates for Ruby 1.9.
-    config.encoding = "utf-8"
-
-    # Configure sensitive parameters which will be filtered from the log file.
-    config.filter_parameters += [:password, :password_confirmation]
+    config.encoding = 'utf-8'
 
     # Enable the asset pipeline
     config.assets.enabled = true
 
     # Version of your assets, change this if you want to expire all your assets
-    config.assets.version = '1.0'
+    config.assets.version = '0.4.6'
 
     # Traduzco el path
-    config.assets.prefix = "/estaticos"
+    config.assets.prefix = '/estaticos'
+
+    # Manejo de versiones en la aplicación
+    is_versioned
+
+    # Servir clientes web y API
+    config.api_only = false
   end
 end

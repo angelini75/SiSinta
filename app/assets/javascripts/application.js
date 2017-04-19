@@ -1,12 +1,29 @@
-// This is a manifest file that'll be compiled into including all the files listed below.
-// Add new JavaScript/Coffee code in separate files in this directory and they'll automatically
-// be included in the compiled file accessible from http://example.com/assets/application.js
-// It's not advisable to add code directly here, but if you do, it'll appear at the bottom of the
-// the compiled file.
-//
-//= require jquery.min
-//= require jquery-ui.min
+// Gemas y vendored
+//= require jquery
+// TODO revisar qué componentes necesito específicamente
+//= require jquery-ui
 //= require jquery_ujs
 //= require jquery.nested-fields
+//= require tinymce-jquery
+//= require select2
+//= require ui.multiselect
+//= require locale/ui-multiselect-es
+//= require jquery-multiselect
+// TODO I18nalizar autocomplete-rails
+//= require autocomplete-rails
+//= require ransack-search
+//= require leaflet
+//= require leaflet.markercluster
+//= require leaflet-plugins
+//
+// Aplicación
 //= require_tree ./jquery
-//= require_tree ./comunes
+//
+//= require comunes/busquedas
+//= require comunes/equipos
+//= require comunes/formularios
+//= require comunes/layout
+//= require comunes/perfiles
+//= require comunes/fichas
+//= require comunes/permisos
+//= require comunes/mapa

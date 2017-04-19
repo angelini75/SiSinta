@@ -1,64 +1,69 @@
 # encoding: utf-8
 class Usuario < ActiveRecord::Base
-  store :config, accessors: [:ficha, :srid]
+  rolify role_cname: 'Rol'
+  # TODO Extraer preferencias a un modelo aparte
+  store :config, accessors: [:srid, :checks_csv_perfiles]
 
-  has_and_belongs_to_many :roles
-  has_many :calicatas, inverse_of: :usuario
-  after_create :asignar_rol_inicial
-  after_initialize :asignar_valores_por_defecto
+  # TODO cambiar relacion a 'creador'
+  has_many :perfiles
+  has_many :proyectos
+  has_many :series
+  has_many :busquedas
+  has_many :adjuntos
+  has_and_belongs_to_many :equipos
+  belongs_to :ficha
 
-  # Include default devise modules. Others available are:
-  # :token_authenticatable, :encryptable, :confirmable, :lockable, :timeoutable and :omniauthable
-  devise :database_authenticatable, :registerable,
-         :recoverable, :rememberable, :trackable, :validatable
+  before_create :asignar_valores_por_defecto
 
-  # Setup accessible (or protected) attributes for your model
-  attr_accessible :nombre, :email, :password, :password_confirmation,
-                  :remember_me, :config, :current_password, :rol_ids,
-                  :ficha, :srid
+  # Módulos a incluir de devise
+  # TODO :confirmable cuando enviemos mails
+  devise :database_authenticatable, :registerable, :recoverable, :rememberable,
+    :trackable, :validatable
 
-  scope :por_rol, joins(:roles).order('roles.nombre ASC')
-  scope :admins, joins(:roles).where('roles.nombre = ?', 'administrador')
+  validates_presence_of :ficha, :srid, on: :update
 
-  def to_s
-    nombre
+  # FIXME Workaround para cierto problema con rolify y las inflecciones
+  alias_method :role_ids, :rol_ids
+  alias_method :role_ids=, :rol_ids=
+
+  # TODO Deshardcodear el nombre del rol +miembro+
+  scope :miembros, ->(recurso) do
+    joins(:roles).where('roles.resource_type' => recurso.class.to_s,
+                        'roles.resource_id' => recurso.id,
+                        'roles.name' => 'miembro')
   end
 
   def usa_ficha?(tipo)
-    ficha == tipo
-  end
-
-  def es? rol
-    if rol.instance_of? Rol
-      roles.include? rol
-    else
-      roles.include? Rol.find_by_nombre(rol.to_s)
-    end
+    ficha.identificador == tipo
   end
 
   def admin?
-    roles.include? Rol.administrador
+    has_role? 'Administrador'
   end
 
   def autorizado?
-    roles.include? Rol.autorizado
+    has_role? 'Autorizado'
   end
 
-  def invitado?
-    roles.include? Rol.invitado
+  # TODO Ver la manera de hacerlo a través de la asociación
+  def roles_globales
+    roles.where(resource_id: nil)
+  end
+
+  # Nombre del rol global (debería haber sólo uno)
+  def rol_global
+    roles_globales.first.try(:name)
+  end
+
+  # Asigno un rol global (Administrador, Autorizado), revocando los anteriores
+  def rol_global=(nuevo_rol)
+    roles_globales.each { |rol| self.revoke rol.name }
+    self.grant nuevo_rol
   end
 
   protected
 
-    # No asigno un rol por defecto para los nuevos usuarios porque quiero un
-    # usuario anónimo sin roles
-    def asignar_rol_inicial
-      roles << Rol.invitado if roles.empty?
-    end
-
     def asignar_valores_por_defecto
-      self.ficha ||= 'completa'
-      self.srid  ||= '4326'
+      self.srid  ||= '4326'     # SRID para mostrar las coordenadas
     end
-
 end

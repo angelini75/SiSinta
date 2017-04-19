@@ -1,12 +1,10 @@
 # encoding: utf-8
 class Fase < ActiveRecord::Base
-  has_many :calicatas, inverse_of: :fase
+  has_many :perfiles
 
   validates_uniqueness_of :codigo, allow_blank: true, allow_nil: true
   validates_uniqueness_of :nombre
   validates_presence_of :nombre
 
-  def to_s
-    nombre
-  end
+  accepts_nested_attributes_for :perfiles
 end

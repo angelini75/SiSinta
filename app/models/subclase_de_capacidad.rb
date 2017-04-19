@@ -2,8 +2,6 @@
 class SubclaseDeCapacidad < Lookup
   se_asocia_con :capacidades, como: :subclase
 
-  def to_str
-    codigo
-  end
-
+  # Declarar los campos para los que ActiveHash debe pregenerar finders
+  field :valor
 end

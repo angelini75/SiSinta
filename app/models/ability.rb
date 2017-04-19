@@ -1,50 +1,92 @@
 # encoding: utf-8
+# Definiciones de permisos para CanCanCan.
+#
+# Abilidades agregadas a las default:
+#
+#   - modificar: funciona como :update, pero sólo para instancias de modelo. Relacionado con rolify
 class Ability
   include CanCan::Ability
 
-  attr_reader :basicos, :calicatas
+  attr_reader :basicos, :perfiles, :recursos
 
-  def initialize(usuario)
-    # Define abilities for the passed in user here. For example:
-    #
-    #   user ||= User.new # guest user (not logged in)
-    #   if user.admin?
-    #     can :manage, :all
-    #   else
-    #     can :read, :all
-    #   end
-    #
-    # The first argument to `can` is the action you are giving the user permission to do.
-    # If you pass :manage it will apply to every action. Other common actions here are
-    # :read, :create, :update and :destroy.
-    #
-    # The second argument is the resource the user can perform the action on. If you pass
-    # :all it will apply to every resource. Otherwise pass a Ruby class of the resource.
-    #
-    # The third argument is an optional hash of conditions to further filter the objects.
-    # For example, here the user can only update published articles.
-    #
-    #   can :update, Article, :published => true
-    #
-    # See the wiki for details: https://github.com/ryanb/cancan/wiki/Defining-Abilities
+  def initialize(usuario = nil)
+    @usuario = usuario || Usuario.new
 
-    usuario ||= Usuario.new # guest user (not logged in)
+    @perfiles = [ Perfil, Horizonte, Analitico, Adjunto, Erosion, Ubicacion,
+                  Humedad, Paisaje, Pedregosidad, Limite, Consistencia,
+                  Estructura, Busqueda ]
+    @basicos =  [ Grupo, Fase, Color, Proyecto, Serie, Equipo ]
+    @recursos = @perfiles + @basicos
 
-    @calicatas = [Calicata, Horizonte, Analisis, Adjunto]
-    @basicos = [Grupo, Fase]
+    alias_action  :autocomplete_usuario_nombre,
+                  :autocomplete_usuario_email,
+                  :autocomplete_grupo_descripcion,
+                  :autocomplete_fase_nombre,
+                  :autocomplete_reconocedores_name,
+                  :autocomplete_etiquetas_name,
+                  :autocomplete_serie_nombre,
+                  :autocomplete_serie_simbolo,
+                  :autocomplete_color_rgb,
+                  :autocomplete_color_hvc,
+                  :seleccionar,
+                  :derivar,
+                  :almacenar,
+                  :exportar,
+                  :procesar,                              to: :read
+    alias_action  :editar_analiticos, :update_analiticos, to: :update
 
-    if usuario.admin?
-      can :manage, :all
+    if @usuario.admin?
+      administrador
     else
-      if usuario.autorizado?
-        can :manage, calicatas
-        can :manage, basicos
+      if @usuario.autorizado?
+        autorizado
+      # Si no tiene permisos globales, ver de qué recursos es miembro
+      elsif @usuario.persisted?
+        miembro
       else
-        # usuario invitado, anónimo o no existente
-        can :read, calicatas, publico: true
-        can :read, basicos
+        invitado
       end
     end
-
   end
+
+  # Lógica de cada rol
+  private
+
+    # FIXME Que no sea el único que puede acceder a los datos de usuarios
+    def administrador
+      can :manage, :all
+    end
+
+    # TODO Debería incluir llamar a `miembro`?
+    def autorizado
+      can :manage, Usuario, id: @usuario.id
+      can :read, recursos
+      can :create, recursos
+      can :manage, perfiles, usuario_id: @usuario.id
+      can :manage, [ Equipo, Proyecto, Serie ], usuario_id: @usuario.id
+      can :update, Equipo, miembros: { id: @usuario.id }
+    end
+
+    # Usuario miembro de un perfil. Usamos una acción personalizada para
+    # separar la consulta sobre instancias de la consulta de clases, por
+    # requisito de rolify
+    def miembro
+      [Serie, Perfil].each do |recurso|
+        can :modificar, recurso,  id: recurso.with_role('Miembro', @usuario).map {|s| s.id}
+      end
+
+      # Los miembros de algo pueden autocompletar los reconocedores y etiquetas
+      can :autocomplete_reconocedores_name, Perfil
+      can :autocomplete_etiquetas_name, Perfil
+
+      # Todos los miembros tienen permisos de invitados
+      invitado
+    end
+
+    # usuario invitado, anónimo o no existente
+    def invitado
+      can :read, perfiles, publico: true
+      can :read, basicos
+      can :create, Busqueda
+    end
 end
